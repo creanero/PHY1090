@@ -21,16 +21,17 @@ int main(int argc, char **argv)
 
 	// creates variables for the vibration
 	int cycles = 5; // number of cycles to show
-	int samples = 100; // sampling rate in samples per cycle
+	int samples = 25; // sampling rate in samples per cycle
 	int time_steps = cycles * samples + 1; // total timesteps
-	double step_size = 2.0*M_PI/samples;
+	double step_size = 1.0/samples;
+
+	// creates a vector for the time stamps in the data
 	double* time_stamps = (double*) malloc(time_steps * sizeof(double));
 	initialise_vector(time_stamps, time_steps, 0.0);
 	generate_timestamps(time_stamps, time_steps, step_size);
 
 	// creates a vector variable for the current positions
 	double* positions = (double*) malloc(points * sizeof(double));
-
 	// and initialises every element to zero
 	initialise_vector(positions, points, 0.0);
 
@@ -39,18 +40,25 @@ int main(int argc, char **argv)
      	out_file = fopen("data/string_wave.csv","w");
 	print_header(&out_file, points);
 
+	// iterates through each time step in the collection
 	for (int i = 0; i < time_steps; i++)
 	{
+		// updates the position using a function
 		update_positions(positions, points, time_stamps[i]);
+
+		// prints an index and time stamp
 		fprintf(out_file, "%d, %lf", i, time_stamps[i]);
+
+		// iterates over all of the points on the line
 		for (int j = 0; j < points; j++)
 		{
+			// prints each y-position to a file
 			fprintf(out_file, ", %lf", positions[j]);
 		}
+		// prints a new line
 		fprintf(out_file, "\n");
 	}
 
-	//print_vector(time_stamps, time_steps);
 	// if we use malloc, must free when done!
 	free(time_stamps);
 	free(positions);
@@ -76,7 +84,7 @@ void print_header(FILE** p_out_file, int points)
 // defines a simple harmonic oscillator as the driving force
 double driver(double time)
 {
-	double value = sin(time);
+	double value = sin(time*2.0*M_PI);
 	return(value);
 }
 

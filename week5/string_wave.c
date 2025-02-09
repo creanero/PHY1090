@@ -68,7 +68,7 @@ void print_header(FILE** p_out_file, int points)
 	fprintf(*p_out_file, "#, time");
 	for (int j = 0; j < points; j++)
 	{
-		fprintf(*p_out_file, ", x[%d]", j);
+		fprintf(*p_out_file, ", y[%d]", j);
 	}
 	fprintf(*p_out_file, "\n");
 }

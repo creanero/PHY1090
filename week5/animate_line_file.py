@@ -200,18 +200,112 @@ def configure_plot(x_positions, y_positions):
     return fig, rope
 
 
-def get_data(filename, other_columns=2):
-    data = pd.read_csv(filename, skipinitialspace=True)
-    num_positions = len(data.columns)-other_columns
+def get_data(filename, other=2):
+    """This function reads the data from the csv file and returns it,
+    together with data properties which are used elsewhere in the 
+    program. 
+
+    Args:
+        filename (string): the path to the file containing the data
+
+    Keword Arguments:
+        other (int): the number of columns in the dataframe that
+            represent data other than the position measurements
+            Defaults to 2
+
+    Returns:
+        data (Pandas Dataframe): a dataframe with rows for each point
+            in time and a column for every point on the string that
+            we are modelling
+        num_positions (int): the number of x-positions on the line
+            that are being modelled
+        num_times (int): the number of samples of the positions in 
+            the supplied data.  Will be used as frame count later.
+
+    """
+    # tries to read the data from the file into a pandas dataframe
+    try:
+        data = pd.read_csv(filename, skipinitialspace=True)
+    # if that file is not found
+    except FileNotFoundError:
+        # explains what has gone wrong
+        print("The file you have specified, {} does not exist. Have you given the correct path to the file?".format(filename))
+        # exits with error status
+        exit(-1)
+
+    # calculates how many positions have been measured
+    num_positions = len(data.columns)-other
+
+    # calculates how many samples were taken
     num_times = len(data)
+
+    # returns the data and meta data
     return data, num_positions, num_times
 
+
 def extract_position(data, i=0, other=2):
+    """This function extracts the position of the points on the string
+    from a dataframe for a given row.  The user can specify the number
+    of other columns that are present in the dataframe
+
+    Args:
+        data (Pandas Dataframe): a dataframe with rows for each point
+            in time and a column for every point on the string that
+            we are modelling
+
+    Keyword Arguments:
+        i (int): the index representing the row of the dataframe
+            Defaults to 0
+        other (int): the number of columns in the dataframe that 
+            represent data other than the position measurements
+            Defaults to 2
+    """
+    # converts a row of the table into a value that can be parsed
     row = data.iloc[i]
+
+    # gets the y positions from elements other to end of the row
+    # flattens this into a numpy array and flattens it to be 
+    # suitable for use with the plotting routines
     y_positions = np.array(row[other:]).flatten()
+
+    # makes the x positions from the length of the row
     x_positions = np.arange(len(row)-other)
+
+    # returns the x and y positions
     return x_positions, y_positions
 
+
+def get_file_name(extension="txt"):
+    """This function reads the filename from the sytem arguments and 
+    captures some of the most common errors.  It does not cover more
+    subtle errors that a user might cause.
+    Args:
+        extension (string): a string containing the extension for the
+            type of file that is sought
+
+    Returns:
+        filename (string): a string that should contain a file of 
+            the type specified in the argument
+    """
+    # tries to read the filename from the system arguments
+    try:
+        filename = sys.argv[1]
+    # if there aren't enough arguments
+    except IndexError:
+        # explain the error
+        print("You must specify a file to plot.\nCorrect Useage: \n\t{} [FILENAME].{}".format(sys.argv[0], extension))
+        # exit the program with error status
+        exit(-1)
+
+    # if the extension of the file is not csv
+    if ((filename.split('.')[-1])!=extension):
+        # explain the error
+        print("The file you have specified, {} does not appear to be a {} file.".format(filename, extension))
+        # exit the program with error status
+        exit(-1)
+
+    # in other circumstances, return the filename
+    return filename
 
 
 def main():
@@ -219,15 +313,17 @@ def main():
     Using a main function instead of executing directly in the global 
     namespace allows for local variables and better control of scope.
     """
+    # gets the filename from the command line
+    filename = get_file_name("csv")
+
     # gets the data and its dimensions from the file
-    data, num_positions, num_times = get_data(sys.argv[1])
+    data, num_positions, num_times = get_data(filename)
 
     # sets up the variables to manage the animation
     times, interval, fps = configure_animation(frame_count=num_times)
 
     # sets up the points on the string 
     x_positions, y_positions = extract_position(data)
-    #x_positions, y_positions = configure_rope(length=num_positions, end_point=False)
 
     # configures the initial state of the plot, including x and y positions of points on the string
     fig, rope = configure_plot(x_positions, y_positions)
